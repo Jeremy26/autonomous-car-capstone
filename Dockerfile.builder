@@ -20,5 +20,3 @@ RUN echo "source /opt/ros/kinetic/setup.bash" >> /root/.bashrc
 
 WORKDIR /app
 RUN mkdir -p /app
-COPY resources/build.sh /app/build.sh
-COPY resources/run.sh /app/run.sh
