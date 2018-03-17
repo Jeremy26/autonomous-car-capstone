@@ -28,10 +28,10 @@ class PID(object):
         self.last_error = error
 
         if val > self.max:
-            return val
+            return self.max
         
         if val < self.min:
-            return val
+            return self.min
 
         self.int_val = integral
         return val

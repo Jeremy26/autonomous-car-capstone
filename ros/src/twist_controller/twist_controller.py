@@ -26,7 +26,6 @@ class Controller(object):
         throttle_pid = PID()
         
         throttle_value = throttle_pid.step(cte, dt)
-        
         return throttle_value
 
     def get_steering(self, target_v, target_w, current_v):
