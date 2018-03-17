@@ -35,3 +35,4 @@
 .vscode
 ros/build
 ros/devel
+logs/

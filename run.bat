@@ -8,5 +8,6 @@ docker run --rm -it ^
     -v %cd%/ros/launch:/app/ros/launch:ro ^
     -v %cd%/data:/app/data ^
     -v %cd%/resources/run.sh:/app/run.sh:ro ^
+    -v %cd%/logs:/root/.ros/log ^
     --name sdcnd-capstone-runner ^
     vwiart/sdcnd-capstone /bin/bash
