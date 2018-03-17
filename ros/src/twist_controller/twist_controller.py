@@ -6,7 +6,6 @@ from pid import PID
 from yaw_controller import YawController
 
 
-
 class Controller(object):
     def __init__(self, wheel_base, steer_ratio, max_lat_accel, max_steer_angle):
         self.wheel_base = wheel_base
@@ -16,6 +15,12 @@ class Controller(object):
         self.max_lat_accel = max_lat_accel
 
         self.last_timestamp = None
+
+        self.yaw_controller = YawController(self.wheel_base,
+                                            self.steer_ratio, 
+                                            self.min_speed,
+                                            self.max_lat_accel,
+                                            self.max_steer_angle)
 
     def get_throttle(self, cte, dt):
         '''returns the throttle given a cte and a dt.
@@ -35,20 +40,15 @@ class Controller(object):
                 - `target_w` : target angular velocity
                 - `current_v` : current linear velocity
         '''
-        yaw_controller = YawController(self.wheel_base,
-                                       self.steer_ratio, 
-                                       self.min_speed,
-                                       self.max_lat_accel,
-                                       self.max_steer_angle)
-        steering = yaw_controller.get_steering(linear_velocity=target_v.x,
-                                               angular_velocity=target_w.z,
-                                               current_velocity=current_v.x)
+        steering = self.yaw_controller.get_steering(linear_velocity=target_v.x,
+                                                    angular_velocity=target_w.z,
+                                                    current_velocity=current_v.x)
         return steering
     
     def get_brake(self, cte):
         brake = 0.
         if cte < 0:
-            brake = max(-10.0 * cte, 1.0)            
+            brake = -1.0 * cte
         return brake
 
     def control(self, target_v, target_w, current_v, dbw_enabled):
