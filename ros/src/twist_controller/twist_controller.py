@@ -15,9 +15,6 @@ class Controller(object):
         self.max_steer_angle = max_steer_angle
         self.max_lat_accel = max_lat_accel
 
-        self.min_throttle = PARAMETERS['throttle']['max']
-        self.max_throttle = PARAMETERS['throttle']['max']
-
         self.last_timestamp = None
 
     def get_throttle(self, cte, dt):
@@ -30,12 +27,6 @@ class Controller(object):
         
         throttle_value = throttle_pid.step(cte, dt)
         
-        if throttle_value > self.max_throttle:
-            return self.max_throttle
-        
-        if throttle_value < self.min_throttle:
-            return self.min_throttle
-
         return throttle_value
 
     def get_steering(self, target_v, target_w, current_v):
