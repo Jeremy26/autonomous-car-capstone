@@ -28,10 +28,12 @@ LOOKAHEAD_WPS = 200
 
 
 class WaypointUpdater(object):
+
     def __init__(self):
 
         rospy.init_node('waypoint_updater')
-        base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        self.base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane,
+                                                   self.waypoints_cb)
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
 
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
@@ -39,19 +41,17 @@ class WaypointUpdater(object):
         # TODO : uncomment when changing velocities for waypoints
         # rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
 
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
-
-        # TODO: Add other member variables you need below
-
+        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane,
+                                                   queue_size=1)
         rospy.spin()
 
-    '''callback method for saving current_pose message. (Complete messages is stored, not just the pose value!!)'''
     def pose_cb(self, msg):
+        '''callback method for saving current_pose message.'''
         self.current_pose = msg
         self.publish_final_waypoints()
 
-    # callback method for saving base waypoints
     def waypoints_cb(self, waypoints):
+        '''callback method for saving base waypoints.'''
         self.base_waypoints = waypoints
 
         # stop listening to /base_waypoints as the base_waypoints are not changing for the project
@@ -69,21 +69,21 @@ class WaypointUpdater(object):
     def set_waypoint_velocity(self, waypoints, waypoint, velocity):
         waypoints[waypoint].twist.twist.linear.x = velocity
 
-    # calculate euclidean distance between index wp1 and wp2
     def distance(self, waypoints, wp1, wp2):
+        '''calculate euclidean distance between index wp1 and wp2.'''
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
         for i in range(wp1, wp2+1):
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            dist += self.dist(waypoints[wp1].pose.pose.position,
+                              waypoints[i].pose.pose.position)
             wp1 = i
         return dist
 
-    # Returns the euclidian distance between 2 points (P11 - Path Planning)
     def dist(self, p1, p2):
-        return math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2 + (p2.z-p1.z)**2)
+        '''Returns the euclidian distance between 2 points (P11 - Path Planning).'''
+        return math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2 + (p2.z - p1.z) ** 2)
 
-    # Get nearest waypoint index from the current pose
     def get_nearest_waypoint_index(self, pose):
+        '''Returns the nearest waypoint index from the current pose.'''
         min_distance_to_next_point = 10000000
 
         p1 = pose.position
@@ -99,9 +99,8 @@ class WaypointUpdater(object):
 
         return index_to_return
 
-    '''Get next set of waypoints to be pusblished as final_waypoints'''
-    # TODO : include traffic lights and obstacle detection
     def get_final_waypoints(self, next_waypoint_index):
+        '''Returns the next set of waypoints to be pusblished as final_waypoints.'''
         final_waypoints = []
         len_all_basepoints = len(self.base_waypoints.waypoints)
 
@@ -115,7 +114,6 @@ class WaypointUpdater(object):
             final_waypoints.append(wp)
         return final_waypoints
 
-    # publish final waypoints
     def publish_final_waypoints(self):
         current_pose = self.current_pose.pose
         nearest_waypoint_index = self.get_nearest_waypoint_index(current_pose)
