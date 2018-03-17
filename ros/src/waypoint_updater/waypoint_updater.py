@@ -26,6 +26,8 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 # Number of waypoints we will publish. You can change this number
 LOOKAHEAD_WPS = 200
 
+ONE_MPH = 0.44704
+
 
 class WaypointUpdater(object):
 
@@ -43,6 +45,9 @@ class WaypointUpdater(object):
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane,
                                                    queue_size=1)
+
+        self.default_velocity = rospy.get_param('~velocity', 1)
+        print("DEFAULT VELOCITY : {}".format(self.default_velocity))
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -100,7 +105,7 @@ class WaypointUpdater(object):
         return index_to_return
 
     def get_final_waypoints(self, next_waypoint_index):
-        '''Returns the next set of waypoints to be pusblished as final_waypoints.'''
+        '''Returns the next set of waypoints to be published as final_waypoints.'''
         final_waypoints = []
         len_all_basepoints = len(self.base_waypoints.waypoints)
 
@@ -109,9 +114,12 @@ class WaypointUpdater(object):
 
             # populate waypoint values
             index = (next_waypoint_index+i) % len_all_basepoints
-            base_waypoint = self.base_waypoints.waypoints[index]
-            wp = deepcopy(base_waypoint)
-            final_waypoints.append(wp)
+            if index >= next_waypoint_index :
+                base_waypoint = self.base_waypoints.waypoints[index]
+                wp = deepcopy(base_waypoint)
+
+                wp.twist.twist.linear.x = self.default_velocity
+                final_waypoints.append(wp)
         return final_waypoints
 
     def publish_final_waypoints(self):
