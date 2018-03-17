@@ -50,8 +50,9 @@ class DBWNode(object):
         self.max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         self.max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
 
-        self.current_linear_velocity = 0.
-        self.current_angular_velocity = 0.
+        self.target_linear_velocity = None
+        self.target_angular_velocity = None
+        self.current_velocity = None
         self.dbw_enabled = False
 
         self.ros_setup_()
@@ -91,21 +92,20 @@ class DBWNode(object):
 
     def current_velocity_callback(self, msg):
         '''callback of the `/vehicle/current_velocity` topic.'''
-        self.current_linear_velocity = msg.twist.linear.x
-        self.current_angular_velocity = msg.twist.angular.z
+        self.current_velocity = msg.twist.linear
 
     def twist_cmd_callback(self, msg):
         '''callback of the `/twist_cmd` topic.'''
-        self.current_linear_velocity = msg.twist.linear.x
-        self.current_angular_velocity = msg.twist.angular.z
+        self.target_linear_velocity = msg.twist.linear
+        self.target_angular_velocity = msg.twist.angular
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
         while not rospy.is_shutdown():
             throttle, brake, steering = \
-                self.controller.control(PARAMETERS['proposed_linear_velocity'],
-                                        PARAMETERS['proposed_angular_velocity'],
-                                        self.current_linear_velocity,
+                self.controller.control(self.target_linear_velocity,
+                                        self.target_angular_velocity,
+                                        self.current_velocity,
                                         self.dbw_enabled)
             if self.dbw_enabled:
                 self.publish(throttle, brake, steering)
