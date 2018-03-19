@@ -51,7 +51,7 @@ class Controller(object):
 
     	error = min(target_linear_vel, self.MAX_VELOCITY) - current_vel
     	proposed_throttle = self.throttle_PID.step(error, dt)
-    	proposed_throttle = self.lowpass.filt(throttle)
+    	proposed_throttle = self.lowpass.filt(proposed_throttle)
 
     	proposed_steer = self.yaw_controller.get_steering(target_linear_vel, target_angular_vel, current_vel)
 
