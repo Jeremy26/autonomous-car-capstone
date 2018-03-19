@@ -58,6 +58,7 @@ class DBWNode(object):
         self.dbw_status = False
         self.target_linear_vel = 0.0
         self.target_angular_vel = 0.0
+        self.current_velocity = 0.0
         
         self.controller = Controller(wheel_base, steer_ratio, max_lat_accel,
                                         max_steer_angle, vehicle_mass, wheel_radius,
