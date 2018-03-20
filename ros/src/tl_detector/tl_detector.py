@@ -100,19 +100,17 @@ class TLDetector(object):
             int: index of the closest waypoint in self.waypoints
 
         """
-        #TODO implement
+        large_dist = 1000000
+        next_nearest_wp_index = None
 
-	large_dist = 1000000
-	next_nearest_wp_index = None
-
-	for i in range(len(self.waypoints.waypoints)):
-	    wp_pose = self.waypoints.waypoints[i].pose
-	    dist = distance_between_poses(wp_pose, pose)
-	    if dist < large_dist:
-	        large_dist = dist
-		next_nearest_wp_index = i
-	rospy.loginfo("tl_detector:get_closest_waypoint - Closest waypoint is %d", next_nearest_wp_index)
-	return next_nearest_wp_index
+        for i in range(len(self.waypoints.waypoints)):
+            wp_pose = self.waypoints.waypoints[i].pose
+            dist = distance_between_poses(wp_pose, pose)
+            if dist < large_dist:
+                large_dist = dist
+                next_nearest_wp_index = i
+        rospy.loginfo("tl_detector:get_closest_waypoint - Closest waypoint is %d", next_nearest_wp_index)
+        return next_nearest_wp_index
 
 
     def get_light_state(self, light):
@@ -149,37 +147,35 @@ class TLDetector(object):
 
         """
         light = None
-	closest_tl_wp_index = None
-	car_position = None
-	current_wp = None
-
+        closest_tl_wp_index = None
+        car_position = None
+        current_wp = None
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
             car_position = self.get_closest_waypoint(self.pose.pose)
-	
-	current_wp = self.waypoints.waypoints[car_position]
+	        current_wp = self.waypoints.waypoints[car_position]
 
         #TODO find the closest visible traffic light (if one exists)
-	large_dist = 1000000
-	dist = None
-	for i in range(len(self.lights)):
-	    light_wp = self.lights[i]
-	    dist = distance_between_waypoints(current_wp.pose, light_wp.pose)
-	    if dist < large_dist
-	        large_dist = dist
-		closest_tl_wp_index = i
-	
-	if closest_tl_wp_index is not None:
-	    light = self.lights[closest_tl_wp_index].pose.pose.position
-	    light_wp = closest_tl_wp_index
+        large_dist = 1000000
+        dist = None
+        for i in range(len(self.lights)):
+            light_wp = self.lights[i]
+            dist = distance_between_waypoints(current_wp.pose, light_wp.pose)
+            if (dist < large_dist):
+                large_dist = dist
+                closest_tl_wp_index = i
+        
+        if closest_tl_wp_index is not None:
+            light = self.lights[closest_tl_wp_index].pose.pose.position
+            light_wp = closest_tl_wp_index
 
-        if light:
-            state = self.get_light_state(light)
-            return light_wp, state
-        self.waypoints = None
-        return -1, TrafficLight.UNKNOWN
+            if light:
+                state = self.get_light_state(light)
+                return light_wp, state
+            self.waypoints = None
+            return -1, TrafficLight.UNKNOWN
 
 
 if __name__ == '__main__':
