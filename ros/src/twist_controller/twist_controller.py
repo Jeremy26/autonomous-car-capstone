@@ -88,6 +88,8 @@ class Controller(object):
         if throttle > 0:
             return throttle, 0.0, steer
 
+        brake = 0
         if abs(throttle) > self.brake_deadband:
             brake = abs(throttle) * self.brake_torque
-            return 0.0, brake, steer
+
+        return 0.0, brake, steer
