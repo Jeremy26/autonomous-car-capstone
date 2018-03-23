@@ -32,6 +32,8 @@
 *.out
 *.app
 
+
+*.DS_Store
 .vscode
 ros/build
 ros/devel
