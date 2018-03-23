@@ -70,24 +70,24 @@ class Controller(object):
 
         # if driver has taken control, reset throttle PID to avoid accumulation
         # of error
-    	if not dbw_enabled:
-    		self.throttle_PID.reset()
+        if not dbw_enabled:
+            self.throttle_PID.reset()
 
-    	error = min(target_linear_velocity, self.MAX_VELOCITY) - current_velocity
-    	throttle = self.throttle_PID.step(error, dt)
-    	throttle = self.lowpass.filter(proposed_throttle)
+        error = min(target_linear_velocity, self.MAX_VELOCITY) - current_velocity
+        throttle = self.throttle_PID.step(error, dt)
+        throttle = self.lowpass.filter(throttle)
 
-    	steer = self.yaw_controller.get_steering(target_linear_velocity, target_angular_velocity, 
-                                                          current_velocity)
+        steer = self.yaw_controller.get_steering(target_linear_velocity, target_angular_velocity, 
+                                                 current_velocity)
 
-    	# if target linear velocity is very less, apply hard brake
-    	if target_linear_velocity < 0.1:
-    		brake = abs(self.deceleration_limit) * self.brake_torque
+        # if target linear velocity is very less, apply hard brake
+        if target_linear_velocity < 0.1:
+            brake = abs(self.deceleration_limit) * self.brake_torque
             return 0.0, brake, 0.0
 
-    	if proposed_throttle > 0:
-    		return throttle, 0.0, steer
+        if throttle > 0:
+            return throttle, 0.0, steer
 
-    	if abs(throttle) > self.brake_deadband:
+        if abs(throttle) > self.brake_deadband:
             brake = abs(throttle) * self.brake_torque
             return 0.0, brake, steer
