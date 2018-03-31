@@ -61,6 +61,7 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
         '''callback of the `/traffic_waypoint` topic.'''
         self.traffic_waypoint = msg.data
+        rospy.loginfo("Traffic waypoints %s : ",self.traffic_waypoint)
 
     def obstacle_cb(self, msg):
         '''callback of the `/obstacle_waypoint` topic.'''
