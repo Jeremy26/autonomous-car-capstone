@@ -13,7 +13,8 @@ from utils import visualization_utils as vis_util
 
 class TLClassifier(object):
 	def __init__(self):
-		#load classifier		
+		#load classifier
+		self.current_light = TrafficLight.UNKNOWN
 		# Name of the directory containing the object detection module we're using
 		MODEL_NAME = 'inference_graph'
 		# Grab path to current working directory
@@ -76,7 +77,17 @@ class TLClassifier(object):
 		boxes = np.squeeze(boxes)
 		scores = np.squeeze(scores)
 		classes = np.squeeze(classes)
-		rospy.loginfo("%s",classes)
-		rospy.loginfo("%s",scores)
-		rospy.loginfo("%s",boxes)
-		return TrafficLight.UNKNOWN
+		min_score_thresh = .5
+		for i in range(boxes.shape[0]):
+			if scores is None or scores[i]>min_score_thresh :
+				class_name = self.category_index[classes[i]]['name']
+				self.current_light = TrafficLight.UNKNOWN
+				if class_name == 'red':
+					self.current_light = TrafficLight.RED
+				elif class_name == 'yellow' :
+					self.current_light = TrafficLight.YELLOW
+				elif class_name == 'green':
+					self.current_light = TrafficLight.GREEN 
+		
+				rospy.loginfo("%s",self.current_light)
+		return self.current_light
