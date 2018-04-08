@@ -19,15 +19,17 @@ class TLClassifier(object):
 
 		# Grab path to current working directory
 		CWD_PATH = os.getcwd()
-		self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph_SITE.pb')
+		self.PATH_TO_CKPT = None
 		self.simulator = simulator
 		rospy.loginfo("%s",self.simulator)
 
 		## Load the correct model
 		if (self.simulator == True):
+			rospy.loginfo("SIMULATOR MODE")
 			self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/simulator','frozen_inference_graph_SIMULATOR.pb')
 		elif (self.simulator == False):
-			self.PATHT_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph_SITE.pb')
+			rospy.loginfo("SITE MODE")
+			self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph_SITE.pb')
 
 		# Path to label map file
 		PATH_TO_LABELS = os.path.join(CWD_PATH,'light_classification/training','Traffic_light_label_map.pbtxt')
