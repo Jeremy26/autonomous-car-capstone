@@ -19,7 +19,7 @@ class TLClassifier(object):
 
 		# Grab path to current working directory
 		CWD_PATH = os.getcwd()
-		self.PATH_TO_CKPT = None
+		self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph_SITE.pb')
 		self.simulator = simulator
 		rospy.loginfo("%s",self.simulator)
 
