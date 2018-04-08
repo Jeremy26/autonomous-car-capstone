@@ -25,9 +25,9 @@ class TLClassifier(object):
 
 		## Load the correct model
 		if (self.simulator == True):
-			self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/simulator','frozen_inference_graph.pb')
+			self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/simulator','frozen_inference_graph_SIMULATOR.pb')
 		elif (self.simulator == False):
-			self.PATHT_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph.pb')
+			self.PATHT_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph_SITE.pb')
 
 		# Path to label map file
 		PATH_TO_LABELS = os.path.join(CWD_PATH,'light_classification/training','Traffic_light_label_map.pbtxt')
