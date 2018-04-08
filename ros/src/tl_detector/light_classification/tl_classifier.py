@@ -13,21 +13,27 @@ from utils import label_map_util
 from utils import visualization_utils as vis_util
 
 class TLClassifier(object):
-	def __init__(self):
+	def __init__(self, simulator):
 		#load classifier
 		self.current_light = TrafficLight.UNKNOWN
-		# Name of the directory containing the object detection module we're using
-		MODEL_NAME = 'inference_graph'
+
 		# Grab path to current working directory
 		CWD_PATH = os.getcwd()
-		# Path to frozen detection graph .pb file, which contains the model that is used
-		# for object detection.
-		PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/frozen_inference_graph.pb')
+		self.PATH_TO_CKPT = None
+		self.simulator = simulator
+		rospy.loginfo("%s",self.simulator)
+
+		## Load the correct model
+		if (self.simulator == True):
+			self.PATH_TO_CKPT = os.path.join(CWD_PATH,'light_classification/simulator','frozen_inference_graph.pb')
+		elif (self.simulator == False):
+			self.PATHT_TO_CKPT = os.path.join(CWD_PATH,'light_classification/real','frozen_inference_graph.pb')
+
 		# Path to label map file
 		PATH_TO_LABELS = os.path.join(CWD_PATH,'light_classification/training','Traffic_light_label_map.pbtxt')
 		# Number of classes the object detector can identify
 		NUM_CLASSES = 4
-		self.PATH_TO_CKPT = PATH_TO_CKPT
+		
 		## Load the label map.
 		# Label maps map indices to category names
 		# Here we use internal utility functions, but anything that returns a
@@ -48,7 +54,7 @@ class TLClassifier(object):
 		self.detection_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
 		# Number of objects detected
 		self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
-
+	
 	def load_graph(self):
 		detection_graph = tf.Graph() # Load the Tensorflow model into memory.
 		with detection_graph.as_default():
