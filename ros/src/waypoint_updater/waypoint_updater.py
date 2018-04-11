@@ -2,6 +2,8 @@
 import yaml
 
 import rospy
+from scipy.spatial import KDTree
+import numpy as np
 
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from std_msgs.msg import Int32
@@ -16,7 +18,7 @@ from behaviour.default import DefaultBehaviour
 
 
 LOOKAHEAD_WPS = 200
-RATE_HZ = 50
+RATE_HZ = 10
 
 
 class WaypointUpdater(object):
@@ -28,15 +30,17 @@ class WaypointUpdater(object):
 		
 		self.current_velocity = None
 		self.current_position = None
-		self.all_traffic_lights = None
 		self.behaviour = None
 		self.base_waypoints = None
-		self.stop_line_positions = None
+		self.current_car_index = None
+		self.traffic_waypoint = -1
+		self.waypoints_2d = None
+		self.waypoint_tree = None
 
 		self.ros_setup_()
 		self.loop()
 
-	def ros_setup_(self):		
+	def ros_setup_(self):
 		self.base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane,
 												   self.waypoints_cb)
 		rospy.Subscriber('/current_pose', PoseStamped, self.position_cb)
@@ -45,15 +49,11 @@ class WaypointUpdater(object):
 		rospy.Subscriber('/obstacle_waypoint', Int32, self.obstacle_cb)
 		rospy.Subscriber('/current_velocity', TwistStamped,
 						 self.current_velocity_cb)
-		rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.all_traffic_lights_cb)
-
-		config_string = rospy.get_param('/traffic_light_config')
-		traffic_light_config = yaml.load(config_string)
-
-		self.stop_line_positions = traffic_light_config['stop_line_positions']
-		self.max_velocity = rospy.get_param('/waypoint_loader/velocity') * 0.2778 # m/s
+		
 		self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane,
 												   queue_size=1)
+
+		self.max_velocity = rospy.get_param('/waypoint_loader/velocity') * 0.2778 # m/s
 
 	def current_velocity_cb(self, msg):
 		'''callback of the `/current_velocity` topic.'''
@@ -62,46 +62,45 @@ class WaypointUpdater(object):
 	def position_cb(self, msg):
 		'''callback of the `/current_pose` topic.'''
 		self.current_position = msg
+		current_x = self.current_position.pose.position.x
+		current_y = self.current_position.pose.position.y
+		if self.waypoints_2d:
+			self.current_car_index = self.get_nearest_waypoint_index(current_x,
+																	 current_y)
 
 	def waypoints_cb(self, msg):
 		'''callback of the `/obstacle_waypoint` topic.'''
 		self.base_waypoints = msg.waypoints
+		self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in self.base_waypoints]
+		self.waypoint_tree = KDTree(self.waypoints_2d)
 
 		# stop listening to /base_waypoints as the base_waypoints are not
 		# changing for the project.
-		self.base_waypoints_sub.unregister()
+		if self.base_waypoints and self.waypoints_2d:
+			self.base_waypoints_sub.unregister()
 
 	def traffic_cb(self, msg):
 		'''callback of the `/traffic_waypoint` topic.'''
 		self.traffic_waypoint = msg.data
 
-	def all_traffic_lights_cb(self, msg):
-		'''callback of /vehicle/traffic_lights topic. Used only for driving in the simulator.
-		   For actual track, use data from traffic_cb
-		'''
-		self.all_traffic_lights = msg
-	
 	def obstacle_cb(self, msg):
 		'''callback of the `/obstacle_waypoint` topic.'''
 		self.obstacle_waypoint = msg.data
 
 	def init_behaviour(self):
 		'''initializes the behaviour when we get all required data.'''
-		is_ready = self.base_waypoints \
-			and self.stop_line_positions \
+		ready = self.base_waypoints \
 			and self.max_velocity \
 			and self.current_position \
 			and self.current_velocity \
-			and self.all_traffic_lights
-		if not is_ready:
+			and self.current_car_index
+		if not ready:
 			return
 		self.behaviour = DefaultBehaviour(base_waypoints=self.base_waypoints,
 										  num_look_ahead_waypoints=LOOKAHEAD_WPS,
-										  stop_line_positions = self.stop_line_positions,
 										  max_velocity=self.max_velocity,
-										  current_position=self.current_position,
 										  current_velocity=self.current_velocity,
-										  all_traffic_lights=self.all_traffic_lights)
+										  current_car_index=self.current_car_index)
 
 	def loop(self):
 		rate = rospy.Rate(RATE_HZ)
@@ -110,19 +109,38 @@ class WaypointUpdater(object):
 				self.init_behaviour()
 				continue
 
-			self.behaviour.update(current_position=self.current_position,
-								  current_velocity=self.current_velocity,
-								  all_traffic_lights = self.all_traffic_lights)
+			waypoints = self.behaviour.process(
+				current_car_index=self.current_car_index,
+				current_velocity=self.current_velocity,
+				stop_index=self.traffic_waypoint)
 
-			waypoints = self.behaviour.process()
 			if waypoints:
 				lane = Lane()
 				lane.header.frame_id = self.current_position.header.frame_id
 				lane.header.stamp = rospy.Time(0)
 				lane.waypoints =  waypoints
 				self.final_waypoints_pub.publish(lane)
-
 			rate.sleep()
+	
+	def get_nearest_waypoint_index(self, x, y):
+		'''Returns the nearest(ahead of the current position) waypoint index from the current pose.'''
+		nearest_index = self.waypoint_tree.query([x, y], 1)[1]
+
+		#check if closest is ahead or behind vehicle
+		nearest_coordinate = self.waypoints_2d[nearest_index]
+		prev_coordinate = self.waypoints_2d[nearest_index-1]
+
+		# equation for hyperplane through closest coords
+		cl_vect = np.array(nearest_coordinate)
+		prev_vect = np.array(prev_coordinate)
+		pos_vect = np.array([x, y])
+
+		val = np.dot((cl_vect - prev_vect),(pos_vect - cl_vect))
+
+		if val > 0:
+			nearest_index = (nearest_index + 1) % len(self.waypoints_2d)
+
+		return nearest_index
 
 if __name__ == '__main__':
 	try:

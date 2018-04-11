@@ -65,7 +65,7 @@ def decelerate(waypoints, car_index, target_index):
 	'''
 
 	# find the index of traffic_light in waypoints set
-	stop_index = min(target_index - (car_index + CAR_LENGTH), 0)
+	stop_index = max(0, target_index - (car_index + CAR_LENGTH))
 
 	for i in range(len(waypoints)):
 		velocity = 0.0
