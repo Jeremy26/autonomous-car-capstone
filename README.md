@@ -14,8 +14,12 @@ Here is the video of the results here : ###VIDEO
 * The second simulator is the same as the parking lot but played with rosbag.
 Here is the video of the results here : ###VIDEO
 
+
 Finally, we are able to drive the car around the parking lot :
 Video here : ###VIDEO
+
+[![Real_Time_Testing](https://img.youtube.com/vi/_zUDEl6GGPc/0.jpg)](https://youtu.be/_zUDEl6GGPc)
+
 
 ### Team
 
