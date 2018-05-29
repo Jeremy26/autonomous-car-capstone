@@ -18,7 +18,7 @@ Here is the video of the results here : ###VIDEO
 Finally, we are able to drive the car around the parking lot :
 Video here : ###VIDEO
 
-[![Real_Time_Testing](https://img.youtube.com/vi/_zUDEl6GGPc/0.jpg)](https://youtu.be/_zUDEl6GGPc)
+[![Real_Time_Testing](imgs/final_vid.png)](https://youtu.be/13VhwfG965Q)
 
 
 ### Team
